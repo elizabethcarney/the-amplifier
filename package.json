@@ -1,0 +1,29 @@
+{
+    "name": "the_amplifier",
+    "description": "A project presented by the Smith College Department of Theatre",
+    "keywords": ["amplifier"],
+    "homepage": "https://sophia.smith.edu/theamplifier/",
+    "version": "1",
+    "author": {
+        "name": "Elizabeth Carney",
+        "email": "ekcarney@smith.edu",
+        "url": "https://github.com/elizabethcarney/"
+    },
+    "contributors": ["Kathleen Hablutzel"],
+    "config": {
+    },
+    "main": "amplifier",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/elizabethcarney/the-amplifier.git"
+    },
+    "bugs": "https://github.com/elizabethcarney/the-amplifier/issues",
+    "dependencies": {
+    },
+    "licenses" : [
+        {
+            "type" : "MIT",
+            "url" : "http://www.opensource.org/licenses/mit-license.php"
+        }
+    ]
+}

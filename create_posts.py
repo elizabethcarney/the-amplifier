@@ -1,5 +1,5 @@
 """
-scrape_sheets.py
+create_posts.py
 Elizabeth Carney
 Created for The Amplifier 2020
 """
@@ -52,11 +52,11 @@ def get_email_prefix(email):
         prefix = email[:i_at]
         return prefix
 
-def find_nicename(name):
+def get_nicename(name):
     """
-    finds project's nicename from its title
+    get project's nicename from its title
     """
-    nicename = name.lower()
+    nicename = name.lower().replace('&','and')
     trans_table = nicename.maketrans(' ','-',string.punctuation)
     nicename = nicename.translate(trans_table)
     return nicename
@@ -82,11 +82,13 @@ def build_content(row):
     # roles_str
     roles_str = genrole
     if (len(row) > 9) and (row[8] != ""):
-        proj_nicename = find_nicename(row[8])
+        proj_nicename = get_nicename(row[8])
+        if genrole != "":
+            roles_str += ', '
         roles_str += '<a href="https://sophia.smith.edu/theamplifier/portfolio/' + proj_nicename + '/" /><em>' + row[8] + '</em></a> (' + row[9] + ')'
     for i in range(10, len(row), 2):
         if row[i] != "":
-            proj_nicename = find_nicename(row[i])
+            proj_nicename = get_nicename(row[i])
             roles_str += ', <a href="https://sophia.smith.edu/theamplifier/portfolio/' + proj_nicename + '/" /><em>' + row[i] + '</em></a> (' + row[i+1] + ')'
     # site_str
     site_str = ""
@@ -105,7 +107,7 @@ def get_categories(row):
     for i in range(8, len(row), 2):
         if row[i] != "":
             proj = row[i]
-            proj_nicename = find_nicename(proj)
+            proj_nicename = get_nicename(proj)
             categories.append({ "name": proj, "nicename": proj_nicename })
 
     return categories
@@ -136,10 +138,10 @@ def main():
     channel_open = '<channel>\n<title>The Amplifier Project</title>\n<link>https://sophia.smith.edu/theamplifier</link>\n<description>Presented by the Smith College Department of Theatre</description>\n<pubDate>Thu, 19 Nov 2020 10:00:00 +0000</pubDate>\n<language>en-US</language>\n<wp:wxr_version>1.2</wp:wxr_version>\n<wp:base_site_url>http://sophia.smith.edu/</wp:base_site_url>\n<wp:base_blog_url>https://sophia.smith.edu/theamplifier</wp:base_blog_url>\n'
     author_open = '<wp:author><wp:author_id>1502</wp:author_id><wp:author_login><![CDATA[ekcarney@smith.edu]]></wp:author_login><wp:author_email><![CDATA[ekcarney@smith.edu]]></wp:author_email><wp:author_display_name><![CDATA[ekcarney@smith.edu]]></wp:author_display_name><wp:author_first_name><![CDATA[Elizabeth]]></wp:author_first_name><wp:author_last_name><![CDATA[Carney]]></wp:author_last_name></wp:author>\n<generator>https://wordpress.org/?v=5.2.2</generator>\n'
     static_opener = xmlrss_open + channel_open + author_open
-    static_created = '<pubDate>Fri, 13 Nov 2020 10:00:00 +0000</pubDate>\n<dc:creator><![CDATA[ekcarney@smith.edu]]></dc:creator>\n'
+    static_created = '<pubDate>Fri, 15 Nov 2020 10:00:00 +0000</pubDate>\n<dc:creator><![CDATA[ekcarney@smith.edu]]></dc:creator>\n'
     static_desc = '<description></description>\n'
     static_encoded = '<excerpt:encoded><![CDATA[]]></excerpt:encoded>\n'
-    static_datetime = '<wp:post_date><![CDATA[2020-11-13 10:00:00]]></wp:post_date>\n<wp:post_date_gmt><![CDATA[2020-11-13 15:00:00]]></wp:post_date_gmt>\n<wp:comment_status><![CDATA[closed]]></wp:comment_status>\n<wp:ping_status><![CDATA[open]]></wp:ping_status>\n'
+    static_datetime = '<wp:post_date><![CDATA[2020-11-15 10:00:00]]></wp:post_date>\n<wp:post_date_gmt><![CDATA[2020-11-15 15:00:00]]></wp:post_date_gmt>\n<wp:comment_status><![CDATA[closed]]></wp:comment_status>\n<wp:ping_status><![CDATA[open]]></wp:ping_status>\n'
     static_relations = '<wp:status><![CDATA[publish]]></wp:status>\n<wp:post_parent>0</wp:post_parent>\n<wp:menu_order>0</wp:menu_order>\n<wp:post_type><![CDATA[post]]></wp:post_type>\n<wp:post_password><![CDATA[]]></wp:post_password>\n<wp:is_sticky>0</wp:is_sticky>\n'
     static_postmeta = '<wp:postmeta>\n<wp:meta_key><![CDATA[_edit_last]]></wp:meta_key>\n<wp:meta_value><![CDATA[3977]]></wp:meta_value>\n</wp:postmeta>\n<wp:postmeta>\n<wp:meta_key><![CDATA[_wp_page_template]]></wp:meta_key>\n<wp:meta_value><![CDATA[default]]></wp:meta_value>\n</wp:postmeta>\n'
     static_closer = '</channel>\n</rss>\n'
@@ -148,16 +150,11 @@ def main():
         print('No data found.')
     else:
         # create xml file using spreadsheet data
-        filename = 'posts.xml'
-        f = open(filename, "a")
+        f = open('output/posts.xml', "a")
         # write xml header
         f.write(static_opener)
 
-        # TODO
-        #for row in values:
-        for i in range(0,2,1):
-            row = values[i]
-
+        for row in values:
             # name row values for readability
             form_email = row[0]
             form_name = row[2]

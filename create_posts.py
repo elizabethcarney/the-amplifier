@@ -150,7 +150,7 @@ def main():
         print('No data found.')
     else:
         # create xml file using spreadsheet data
-        f = open('output/posts.xml', "a")
+        f = open('output/bio_posts.xml', "a")
         # write xml header
         f.write(static_opener)
 

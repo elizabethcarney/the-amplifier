@@ -74,11 +74,12 @@ def build_content(row):
     site = row[6]
     genrole = row[7]
 
+    # name_str
     if pron == "":
         name_str = '<b>' + name + '</b>\n\n'
     else:
         name_str = '<b>' + name + ', ' + pron + '</b>\n\n'
-
+    # roles_str
     roles_str = genrole
     if (len(row) > 9) and (row[8] != ""):
         proj_nicename = find_nicename(row[8])
@@ -87,7 +88,7 @@ def build_content(row):
         if row[i] != "":
             proj_nicename = find_nicename(row[i])
             roles_str += ', <a href="https://sophia.smith.edu/theamplifier/portfolio/' + proj_nicename + '/" /><em>' + row[i] + '</em></a> (' + row[i+1] + ')'
-
+    # site_str
     site_str = ""
     if site != "":
         site_str = '\n\n<a href="' + site + '" />' + site + '</a>'
@@ -95,32 +96,24 @@ def build_content(row):
     content_str = name_str + bio + '\n\nRoles: ' + roles_str + site_str
     return content_str
 
+def get_categories(row):
+    """
+    Gets list of person's projects with nicenames
+    """
+    categories = []
+
+    for i in range(8, len(row), 2):
+        if row[i] != "":
+            proj = row[i]
+            proj_nicename = find_nicename(proj)
+            categories.append({ "name": proj, "nicename": proj_nicename })
+
+    return categories
+
 def main():
     """
-    Reads in values from participant responses sheet
+    Creates XML file to be imported into Wordpress autofilled with responses from Google spreadsheet
     """
-    # initialize variables
-    post_title = ""
-    post_name = ""
-    post_content = ""
-    post_id = 201
-    post_domain = {
-        "nicename": "",
-        "cdata_name": ""
-    }
-    post_domains = []
-
-    # static parts of xml file to write
-    xmlrss_open = '<?xml version="1.0" encoding="UTF-8" ?>\n<rss version="2.0"\nxmlns:excerpt="http://wordpress.org/export/1.2/excerpt/"\nxmlns:content="http://purl.org/rss/1.0/modules/content/"\nxmlns:wfw="http://wellformedweb.org/CommentAPI/"\nxmlns:dc="http://purl.org/dc/elements/1.1/"\nxmlns:wp="http://wordpress.org/export/1.2/"\n>\n'
-    channel_open = '<channel>\n<title>The Amplifier Project</title>\n<link>https://sophia.smith.edu/theamplifier</link>\n<description>Presented by the Smith College Department of Theatre</description>\n<pubDate>Thu, 19 Nov 2020 10:00:00 +0000</pubDate>\n<language>en-US</language>\n<wp:wxr_version>1.2</wp:wxr_version>\n<wp:base_site_url>http://sophia.smith.edu/</wp:base_site_url>\n<wp:base_blog_url>https://sophia.smith.edu/theamplifier</wp:base_blog_url>\n<wp:author><wp:author_id>1502</wp:author_id><wp:author_login><![CDATA[ekcarney@smith.edu]]></wp:author_login><wp:author_email><![CDATA[ekcarney@smith.edu]]></wp:author_email><wp:author_display_name><![CDATA[ekcarney@smith.edu]]></wp:author_display_name><wp:author_first_name><![CDATA[Elizabeth]]></wp:author_first_name><wp:author_last_name><![CDATA[Carney]]></wp:author_last_name></wp:author>\n<generator>https://wordpress.org/?v=5.2.2</generator>\n'
-    static_opener = xmlrss_open + channel_open
-    static_created = '<pubDate>Fri, 13 Nov 2020 10:00:00 +0000</pubDate>\n<dc:creator><![CDATA[ekcarney@smith.edu]]></dc:creator>\n'
-    static_desc = '<description></description>\n'
-    static_encoded = '<excerpt:encoded><![CDATA[]]></excerpt:encoded>\n'
-    static_datetime = '<wp:post_date><![CDATA[2020-11-13 10:00:00]]></wp:post_date>\n<wp:post_date_gmt><![CDATA[2020-11-13 15:00:00]]></wp:post_date_gmt>\n<wp:comment_status><![CDATA[closed]]></wp:comment_status>\n<wp:ping_status><![CDATA[open]]></wp:ping_status>\n'
-    static_relations = '<wp:status><![CDATA[publish]]></wp:status>\n<wp:post_parent>0</wp:post_parent>\n<wp:menu_order>0</wp:menu_order>\n<wp:post_type><![CDATA[post]]></wp:post_type>\n<wp:post_password><![CDATA[]]></wp:post_password>\n<wp:is_sticky>0</wp:is_sticky>\n'
-    static_postmeta = '<wp:postmeta>\n<wp:meta_key><![CDATA[_edit_last]]></wp:meta_key>\n<wp:meta_value><![CDATA[3977]]></wp:meta_value>\n</wp:postmeta>\n<wp:postmeta>\n<wp:meta_key><![CDATA[_wp_page_template]]></wp:meta_key>\n<wp:meta_value><![CDATA[default]]></wp:meta_value>\n</wp:postmeta>\n'
-    static_closer = '</channel>\n</rss>\n'
 
     # initialize API service
     creds = oauth()
@@ -130,6 +123,26 @@ def main():
     sheet = service.spreadsheets()
     result = sheet.values().get(spreadsheetId=SPREADSHEET_ID, range=RANGE).execute()
     values = result.get('values', [])
+
+    # initialize variables
+    post_title = ""
+    post_name = ""
+    post_content = ""
+    post_id = 201
+    post_categories = []
+
+    # static parts of xml file to write
+    xmlrss_open = '<?xml version="1.0" encoding="UTF-8" ?>\n<rss version="2.0"\nxmlns:excerpt="http://wordpress.org/export/1.2/excerpt/"\nxmlns:content="http://purl.org/rss/1.0/modules/content/"\nxmlns:wfw="http://wellformedweb.org/CommentAPI/"\nxmlns:dc="http://purl.org/dc/elements/1.1/"\nxmlns:wp="http://wordpress.org/export/1.2/"\n>\n'
+    channel_open = '<channel>\n<title>The Amplifier Project</title>\n<link>https://sophia.smith.edu/theamplifier</link>\n<description>Presented by the Smith College Department of Theatre</description>\n<pubDate>Thu, 19 Nov 2020 10:00:00 +0000</pubDate>\n<language>en-US</language>\n<wp:wxr_version>1.2</wp:wxr_version>\n<wp:base_site_url>http://sophia.smith.edu/</wp:base_site_url>\n<wp:base_blog_url>https://sophia.smith.edu/theamplifier</wp:base_blog_url>\n'
+    author_open = '<wp:author><wp:author_id>1502</wp:author_id><wp:author_login><![CDATA[ekcarney@smith.edu]]></wp:author_login><wp:author_email><![CDATA[ekcarney@smith.edu]]></wp:author_email><wp:author_display_name><![CDATA[ekcarney@smith.edu]]></wp:author_display_name><wp:author_first_name><![CDATA[Elizabeth]]></wp:author_first_name><wp:author_last_name><![CDATA[Carney]]></wp:author_last_name></wp:author>\n<generator>https://wordpress.org/?v=5.2.2</generator>\n'
+    static_opener = xmlrss_open + channel_open + author_open
+    static_created = '<pubDate>Fri, 13 Nov 2020 10:00:00 +0000</pubDate>\n<dc:creator><![CDATA[ekcarney@smith.edu]]></dc:creator>\n'
+    static_desc = '<description></description>\n'
+    static_encoded = '<excerpt:encoded><![CDATA[]]></excerpt:encoded>\n'
+    static_datetime = '<wp:post_date><![CDATA[2020-11-13 10:00:00]]></wp:post_date>\n<wp:post_date_gmt><![CDATA[2020-11-13 15:00:00]]></wp:post_date_gmt>\n<wp:comment_status><![CDATA[closed]]></wp:comment_status>\n<wp:ping_status><![CDATA[open]]></wp:ping_status>\n'
+    static_relations = '<wp:status><![CDATA[publish]]></wp:status>\n<wp:post_parent>0</wp:post_parent>\n<wp:menu_order>0</wp:menu_order>\n<wp:post_type><![CDATA[post]]></wp:post_type>\n<wp:post_password><![CDATA[]]></wp:post_password>\n<wp:is_sticky>0</wp:is_sticky>\n'
+    static_postmeta = '<wp:postmeta>\n<wp:meta_key><![CDATA[_edit_last]]></wp:meta_key>\n<wp:meta_value><![CDATA[3977]]></wp:meta_value>\n</wp:postmeta>\n<wp:postmeta>\n<wp:meta_key><![CDATA[_wp_page_template]]></wp:meta_key>\n<wp:meta_value><![CDATA[default]]></wp:meta_value>\n</wp:postmeta>\n'
+    static_closer = '</channel>\n</rss>\n'
 
     if not values:
         print('No data found.')
@@ -153,6 +166,7 @@ def main():
             post_title = form_name
             post_name = get_email_prefix(form_email)
             post_content = build_content(row)
+            post_categories = get_categories(row)
 
             # build post xml
             # variable tags: title, link, guid, content-encoded, wp:post_id, wp:post_name, category
@@ -167,7 +181,8 @@ def main():
             f.write(static_datetime)
             f.write('<wp:post_name><![CDATA[' + post_name + ']]></wp:post_name>\n')
             f.write(static_relations)
-            #f.write('<category domain="category" nicename="project-x"><![CDATA[Project X]]></category>')
+            for cat in post_categories:
+                f.write('<category domain="category" nicename="' + cat['nicename'] + '"><![CDATA[' + cat['name'] + ']]></category>\n')
             f.write(static_postmeta)
             f.write('</item>\n')
 

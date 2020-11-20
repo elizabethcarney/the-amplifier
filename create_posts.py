@@ -78,7 +78,7 @@ def build_content(row):
     if pron == "":
         name_str = '<b>' + name + '</b>\n\n'
     else:
-        name_str = '<b>' + name + ', ' + pron + '</b>\n\n'
+        name_str = '<b>' + name + ' (' + pron + ')</b>\n\n'
     # roles_str
     roles_str = genrole
     if (len(row) > 9) and (row[8] != ""):

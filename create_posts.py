@@ -68,12 +68,16 @@ def build_content(row):
     NOTE: posts currently will not have images!
     """
     # name row values for readability
+    email = row[0]
     name = row[2]
     pron = row[3]
     bio = row[4]
     site = row[6]
     genrole = row[7]
 
+    # image_str
+    email_prefix = get_email_prefix(email)
+    image_str = '<img class="alignleft size-medium" src="https://sophia.smith.edu/theamplifier/wp-content/uploads/sites/605/2020/11/' + email_prefix + '.png" alt="' + name + '" width="300" height="300" />\n\n'
     # name_str
     if pron == "":
         name_str = '<b>' + name + '</b>\n\n'
@@ -95,7 +99,7 @@ def build_content(row):
     if site != "":
         site_str = '\n\n<a href="' + site + '" />' + site + '</a>'
 
-    content_str = name_str + bio + '\n\nRoles: ' + roles_str + site_str
+    content_str = image_str + name_str + bio + '\n\nRoles: ' + roles_str + site_str
     return content_str
 
 def get_projects(row):

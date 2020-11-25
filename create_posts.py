@@ -98,19 +98,19 @@ def build_content(row):
     content_str = name_str + bio + '\n\nRoles: ' + roles_str + site_str
     return content_str
 
-def get_categories(row):
+def get_projects(row):
     """
     Gets list of person's projects with nicenames
     """
-    categories = []
+    projs = []
 
     for i in range(8, len(row), 2):
         if row[i] != "":
             proj = row[i]
             proj_nicename = get_nicename(proj)
-            categories.append({ "name": proj, "nicename": proj_nicename })
+            projs.append({ "name": proj, "nicename": proj_nicename })
 
-    return categories
+    return projs
 
 def main():
     """
@@ -131,7 +131,7 @@ def main():
     post_name = ""
     post_content = ""
     post_id = 201
-    post_categories = []
+    post_tags = []
 
     # static parts of xml file to write
     xmlrss_open = '<?xml version="1.0" encoding="UTF-8" ?>\n<rss version="2.0"\nxmlns:excerpt="http://wordpress.org/export/1.2/excerpt/"\nxmlns:content="http://purl.org/rss/1.0/modules/content/"\nxmlns:wfw="http://wellformedweb.org/CommentAPI/"\nxmlns:dc="http://purl.org/dc/elements/1.1/"\nxmlns:wp="http://wordpress.org/export/1.2/"\n>\n'
@@ -142,7 +142,7 @@ def main():
     static_desc = '<description></description>\n'
     static_encoded = '<excerpt:encoded><![CDATA[]]></excerpt:encoded>\n'
     static_datetime = '<wp:post_date><![CDATA[2020-11-15 10:00:00]]></wp:post_date>\n<wp:post_date_gmt><![CDATA[2020-11-15 15:00:00]]></wp:post_date_gmt>\n<wp:comment_status><![CDATA[closed]]></wp:comment_status>\n<wp:ping_status><![CDATA[open]]></wp:ping_status>\n'
-    static_relations = '<wp:status><![CDATA[publish]]></wp:status>\n<wp:post_parent>0</wp:post_parent>\n<wp:menu_order>0</wp:menu_order>\n<wp:post_type><![CDATA[post]]></wp:post_type>\n<wp:post_password><![CDATA[]]></wp:post_password>\n<wp:is_sticky>0</wp:is_sticky>\n'
+    static_relations = '<wp:status><![CDATA[publish]]></wp:status>\n<wp:post_parent>0</wp:post_parent>\n<wp:menu_order>0</wp:menu_order>\n<wp:post_type><![CDATA[post]]></wp:post_type>\n<wp:post_password><![CDATA[]]></wp:post_password>\n<wp:is_sticky>0</wp:is_sticky>\n<category domain="category" nicename="contributor"><![CDATA[Contributor]]></category>\n'
     static_postmeta = '<wp:postmeta>\n<wp:meta_key><![CDATA[_edit_last]]></wp:meta_key>\n<wp:meta_value><![CDATA[3977]]></wp:meta_value>\n</wp:postmeta>\n<wp:postmeta>\n<wp:meta_key><![CDATA[_wp_page_template]]></wp:meta_key>\n<wp:meta_value><![CDATA[default]]></wp:meta_value>\n</wp:postmeta>\n'
     static_closer = '</channel>\n</rss>\n'
 
@@ -163,10 +163,10 @@ def main():
             post_title = form_name
             post_name = get_email_prefix(form_email)
             post_content = build_content(row)
-            post_categories = get_categories(row)
+            post_tags = get_projects(row)
 
             # build post xml
-            # variable tags: title, link, guid, content-encoded, wp:post_id, wp:post_name, category
+            # variable tags: title, link, guid, content-encoded, wp:post_id, wp:post_name, post_tag
             f.write('<item>\n<title>' + post_title + '</title>\n')
             f.write('<link>https://sophia.smith.edu/theamplifier/' + post_name + '/</link>\n')
             f.write(static_created)
@@ -178,8 +178,8 @@ def main():
             f.write(static_datetime)
             f.write('<wp:post_name><![CDATA[' + post_name + ']]></wp:post_name>\n')
             f.write(static_relations)
-            for cat in post_categories:
-                f.write('<category domain="category" nicename="' + cat['nicename'] + '"><![CDATA[' + cat['name'] + ']]></category>\n')
+            for tag in post_tags:
+                f.write('<category domain="post_tag" nicename="' + tag['nicename'] + '"><![CDATA[' + tag['name'] + ']]></category>\n')
             f.write(static_postmeta)
             f.write('</item>\n')
 

@@ -4,6 +4,8 @@ Elizabeth Carney
 Created for The Amplifier 2020
 """
 
+# TODO fix oona's and hero's bios
+
 from __future__ import print_function
 import string
 import pickle
@@ -12,7 +14,7 @@ from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 
-# spreadsheet: Combed Data Participant Responses
+# spreadsheet: Participant Bios
 SPREADSHEET_ID = '1Fycidn_h-GyS9Wnl2uVsE9wlY4zG0jDsCpO0WEuh0J0'
 RANGE = 'Bios!A2:R35'
 
@@ -61,11 +63,17 @@ def get_nicename(name):
     nicename = nicename.translate(trans_table)
     return nicename
 
+def get_img(email):
+    img_dict = {
+        # gitignore
+    }
+
+    img = img_dict.get(email)
+    return img
+
 def build_content(row):
     """
     returns string of post content based on form values
-
-    NOTE: posts currently will not have images!
     """
     # name row values for readability
     email = row[0]
@@ -76,8 +84,10 @@ def build_content(row):
     genrole = row[7]
 
     # image_str
-    email_prefix = get_email_prefix(email)
-    image_str = '<img class="alignleft size-medium" src="https://sophia.smith.edu/theamplifier/wp-content/uploads/sites/605/2020/11/' + email_prefix + '.png" alt="' + name + '" width="300" height="300" />\n\n'
+    image_str = ""
+    image_name = get_img(email)
+    if (image_name is not None) and (image_name != ""):
+        image_str = '<img class="alignleft size-medium" src="https://sophia.smith.edu/theamplifier/wp-content/uploads/sites/605/2020/11/' + image_name + '" alt="' + name + '" width="300" height="300" />\n\n'
     # name_str
     if pron == "":
         name_str = '<b>' + name + '</b>\n\n'
@@ -89,11 +99,11 @@ def build_content(row):
         proj_nicename = get_nicename(row[8])
         if genrole != "":
             roles_str += ', '
-        roles_str += '<a href="https://sophia.smith.edu/theamplifier/portfolio/' + proj_nicename + '/" /><em>' + row[8] + '</em></a> (' + row[9] + ')'
+        roles_str += '<a href="https://sophia.smith.edu/theamplifier/projects/' + proj_nicename + '/" /><em>' + row[8] + '</em></a> (' + row[9] + ')'
     for i in range(10, len(row), 2):
         if row[i] != "":
             proj_nicename = get_nicename(row[i])
-            roles_str += ', <a href="https://sophia.smith.edu/theamplifier/portfolio/' + proj_nicename + '/" /><em>' + row[i] + '</em></a> (' + row[i+1] + ')'
+            roles_str += ', <a href="https://sophia.smith.edu/theamplifier/projects/' + proj_nicename + '/" /><em>' + row[i] + '</em></a> (' + row[i+1] + ')'
     # site_str
     site_str = ""
     if site != "":
@@ -116,6 +126,20 @@ def get_projects(row):
 
     return projs
 
+def get_nicknames(col):
+    """
+    Gets list of person's nicknames with nicenames
+    """
+    nicks = []
+
+    if col != "":
+        nick_list = col.split(", ")
+        for nick in nick_list:
+            nick_nicename = get_nicename(nick)
+            nicks.append({ "name": nick, "nicename": nick_nicename })
+
+    return nicks
+
 def main():
     """
     Creates XML file to be imported into Wordpress autofilled with responses from Google spreadsheet
@@ -134,7 +158,7 @@ def main():
     post_title = ""
     post_name = ""
     post_content = ""
-    post_id = 201
+    post_id = 250
     post_tags = []
 
     # static parts of xml file to write
@@ -146,7 +170,7 @@ def main():
     static_desc = '<description></description>\n'
     static_encoded = '<excerpt:encoded><![CDATA[]]></excerpt:encoded>\n'
     static_datetime = '<wp:post_date><![CDATA[2020-11-15 10:00:00]]></wp:post_date>\n<wp:post_date_gmt><![CDATA[2020-11-15 15:00:00]]></wp:post_date_gmt>\n<wp:comment_status><![CDATA[closed]]></wp:comment_status>\n<wp:ping_status><![CDATA[open]]></wp:ping_status>\n'
-    static_relations = '<wp:status><![CDATA[publish]]></wp:status>\n<wp:post_parent>0</wp:post_parent>\n<wp:menu_order>0</wp:menu_order>\n<wp:post_type><![CDATA[post]]></wp:post_type>\n<wp:post_password><![CDATA[]]></wp:post_password>\n<wp:is_sticky>0</wp:is_sticky>\n<category domain="category" nicename="contributor"><![CDATA[Contributor]]></category>\n'
+    static_relations = '<wp:status><![CDATA[publish]]></wp:status>\n<wp:post_parent>0</wp:post_parent>\n<wp:menu_order>0</wp:menu_order>\n<wp:post_type><![CDATA[post]]></wp:post_type>\n<wp:post_password><![CDATA[]]></wp:post_password>\n<wp:is_sticky>0</wp:is_sticky>\n<category domain="category" nicename="contributors"><![CDATA[Contributors]]></category>\n'
     static_postmeta = '<wp:postmeta>\n<wp:meta_key><![CDATA[_edit_last]]></wp:meta_key>\n<wp:meta_value><![CDATA[3977]]></wp:meta_value>\n</wp:postmeta>\n<wp:postmeta>\n<wp:meta_key><![CDATA[_wp_page_template]]></wp:meta_key>\n<wp:meta_value><![CDATA[default]]></wp:meta_value>\n</wp:postmeta>\n'
     static_closer = '</channel>\n</rss>\n'
 
@@ -168,11 +192,12 @@ def main():
             post_name = get_email_prefix(form_email)
             post_content = build_content(row)
             post_tags = get_projects(row)
+            post_tags.extend(get_nicknames(row[1]))
 
             # build post xml
-            # variable tags: title, link, guid, content-encoded, wp:post_id, wp:post_name, post_tag
+            # variable tags: title, link, guid, content-encoded, wp:post_id, wp:post_name, category post_tag
             f.write('<item>\n<title>' + post_title + '</title>\n')
-            f.write('<link>https://sophia.smith.edu/theamplifier/' + post_name + '/</link>\n')
+            f.write('<link>https://sophia.smith.edu/theamplifier/contributors/' + post_name + '/</link>\n')
             f.write(static_created)
             f.write('<guid isPermaLink="false">https://sophia.smith.edu/theamplifier/?p=' + str(post_id) + '</guid>\n')
             f.write(static_desc)
